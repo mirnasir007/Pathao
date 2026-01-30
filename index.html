@@ -325,7 +325,10 @@
             let merchantId = String(getVal(row, 'merchant') || "");
             let name = String(getVal(row, 'name') || "");
             let desc = String(getVal(row, 'product') || getVal(row, 'desc') || ""); 
-            let qty = getVal(row, 'qty') || 1;
+            
+            // --- FIX FOR QUANTITY ---
+            // Look for 'quantity' OR 'qty'
+            let qty = getVal(row, 'quantity') || getVal(row, 'qty') || 1;
 
             if (!phone && !amount && !address) continue;
 
@@ -354,8 +357,6 @@
                     }
                 }
             }
-
-            // NOTE: Removed "Default to Dhaka". If not found, it remains empty and RED.
 
             const rowId = i;
             const rowObj = {
@@ -406,6 +407,7 @@
                 <td><input class="cell-input" value="${qty}" style="width:100%"></td>
                 <td>0.5</td>
                 <td><input class="cell-input" value="${desc}" onchange="updateData(${rowId}, 'desc', this.value)"></td>
+                <!-- Special Instruction Input -->
                 <td><input class="cell-input" onchange="updateData(${rowId}, 'specialInstruction', this.value)" placeholder=""></td>
             `;
             tbody.appendChild(tr);
