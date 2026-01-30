@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pathao Smart Bulk Uploader</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- FAVICON ADDED -->
     <link rel="icon" type="image/png" href="logo.png">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         /* ZOOM LEVEL 90% */
@@ -321,13 +323,17 @@
             
             let phone = cleanPhone(getVal(row, 'phone'));
             let amount = cleanAmount(getVal(row, 'amount'));
-            let address = String(getVal(row, 'address') || "");
+            
+            // --- FIX FOR ADDRESS LINE BREAKS ---
+            let rawAddress = String(getVal(row, 'address') || "");
+            // Replace newlines/tabs with space to fix display issue
+            let address = rawAddress.replace(/[\r\n\t]+/g, " ").trim();
+
             let merchantId = String(getVal(row, 'merchant') || "");
             let name = String(getVal(row, 'name') || "");
             let desc = String(getVal(row, 'product') || getVal(row, 'desc') || ""); 
             
             // --- FIX FOR QUANTITY ---
-            // Look for 'quantity' OR 'qty'
             let qty = getVal(row, 'quantity') || getVal(row, 'qty') || 1;
 
             if (!phone && !amount && !address) continue;
