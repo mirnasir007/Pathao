@@ -4,63 +4,148 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pathao Smart Bulk Uploader</title>
+    <!-- FAVICON ADDED -->
     <link rel="icon" type="image/png" href="logo.png">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         /* ZOOM LEVEL 90% */
-        body { font-family: 'Roboto', sans-serif; background: #f9f9f9; margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; zoom: 90%; }
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background: #f9f9f9; 
+            margin: 0; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden;
+            zoom: 90%; 
+        }
         
-        /* HEADER */
+        /* --- HEADER AREA --- */
         .header { background: #fff; padding: 12px 20px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); z-index: 20; }
         .logo { color: #ef3d2d; font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        
         .controls { display: flex; gap: 10px; align-items: center; }
         .btn { padding: 8px 16px; border: none; border-radius: 4px; font-weight: 500; cursor: pointer; transition: 0.2s; font-size: 13px; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
         .btn-red { background: #ef3d2d; color: white; } .btn-red:hover { background: #d32f2f; }
         .btn-blue { background: #1976d2; color: white; } .btn-blue:hover { background: #1565c0; }
         .btn-green { background: #2e7d32; color: white; } .btn-green:hover { background: #1b5e20; }
         .btn:disabled { background: #ccc; cursor: not-allowed; }
-        input[type="file"], select { font-size: 13px; padding: 6px; border: 1px solid #ddd; border-radius: 4px; }
+        
+        input[type="file"] { font-size: 13px; }
 
-        /* STATS BAR */
+        /* --- STATS BAR --- */
         .stats-bar { background: #fff3f2; color: #d32f2f; padding: 8px 20px; font-size: 13px; font-weight: 600; display: flex; justify-content: space-between; border-bottom: 1px solid #ffcdd2; flex-shrink: 0; z-index: 15; position: relative; }
         .stats-right { display: flex; gap: 15px; }
 
-        /* TABLE */
-        .table-wrapper { flex: 1; overflow: auto; padding: 0; background: #f1f3f6; position: relative; padding-bottom: 250px; }
-        .table-card { background: white; border-radius: 0; box-shadow: none; display: inline-block; min-width: 100%; margin-top: 0; border-top: 1px solid #e0e0e0; }
+        /* --- TABLE AREA --- */
+        .table-wrapper { 
+            flex: 1; 
+            overflow: auto; 
+            padding: 0; 
+            background: #f1f3f6; 
+            position: relative; 
+            padding-bottom: 250px; 
+        }
+        
+        .table-card { 
+            background: white; 
+            border-radius: 0; 
+            box-shadow: none; 
+            display: inline-block; 
+            min-width: 100%; 
+            margin-top: 0;
+            border-top: 1px solid #e0e0e0;
+        }
+        
         table { width: auto; min-width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+        
         thead { position: sticky; top: 0; z-index: 10; }
         thead tr { background-color: #f5f5f5; height: 45px; }
-        th { position: sticky; top: 0; background: #f5f5f5; z-index: 10; text-align: left; padding: 0 10px; color: #444; font-weight: 700; font-size: 12px; border-bottom: 2px solid #e0e0e0; border-right: 1px solid #e0e0e0; white-space: nowrap; }
+        th { 
+            position: sticky; top: 0; background: #f5f5f5; z-index: 10; 
+            text-align: left; padding: 0 10px; 
+            color: #444; font-weight: 700; font-size: 12px;
+            border-bottom: 2px solid #e0e0e0;
+            border-right: 1px solid #e0e0e0;
+            white-space: nowrap;
+        }
+        
         td { border-bottom: 1px solid #eee; border-right: 1px solid #eee; padding: 0; vertical-align: top; background: #fff; position: relative; }
         
-        /* INPUTS */
-        input.cell-input { width: 100%; height: 40px; border: none; outline: none; padding: 0 10px; font-size: 13px; background: transparent; font-family: 'Roboto', sans-serif; box-sizing: border-box; }
+        /* Inputs */
+        input.cell-input { 
+            width: 100%; height: 40px; border: none; outline: none; padding: 0 10px; font-size: 13px; background: transparent; font-family: 'Roboto', sans-serif; box-sizing: border-box;
+        }
         input.cell-input:focus { background: #e3f2fd; box-shadow: inset 0 0 0 2px #2196f3; }
-        textarea.cell-textarea { width: 100%; min-width: 250px; height: 100%; min-height: 50px; border: none; outline: none; padding: 8px; font-size: 12px; font-family: 'Roboto', sans-serif; resize: none; overflow: hidden; background: transparent; line-height: 1.3; }
+
+        textarea.cell-textarea {
+            width: 100%; min-width: 250px; height: 100%; min-height: 50px; border: none; outline: none; padding: 8px; font-size: 12px; font-family: 'Roboto', sans-serif; resize: none; overflow: hidden; background: transparent; line-height: 1.3;
+        }
         textarea.cell-textarea:focus { background: #e3f2fd; }
 
-        /* VALIDATION & STATUS */
+        /* Validation Colors */
         .error-cell { background-color: #ffebee !important; border: 2px solid #ef5350 !important; }
         .auto-filled { background-color: #e8f5e9 !important; }
         .row-success { background-color: #e8f5e9 !important; }
         .row-error { background-color: #ffebee !important; }
+
         .loader { border: 2px solid #f3f3f3; border-top: 2px solid #ef3d2d; border-radius: 50%; width: 12px; height: 12px; animation: spin 1s linear infinite; display: inline-block; margin-right: 5px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* AUTOCOMPLETE */
-        .autocomplete-wrapper { position: relative; width: 100%; height: 100%; }
-        .autocomplete-list { position: absolute; border: 1px solid #ddd; border-top: none; z-index: 100; top: 100%; left: 0; right: 0; background-color: #fff; max-height: 250px; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.15); display: none; border-radius: 0 0 4px 4px; }
-        .autocomplete-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f1f1f1; font-size: 13px; color: #333; }
-        .autocomplete-item:hover, .autocomplete-active { background-color: #e3f2fd; }
-        .autocomplete-active { background-color: #1976d2 !important; color: #ffffff !important; }
-        .autocomplete-active strong { color: #ffeb3b !important; }
-        .autocomplete-item strong { color: #ef3d2d; }
+        /* --- CUSTOM AUTOCOMPLETE DROPDOWN STYLES --- */
+        .autocomplete-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        .autocomplete-list {
+            position: absolute;
+            border: 1px solid #ddd;
+            border-top: none;
+            z-index: 100;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: #fff;
+            max-height: 250px;
+            overflow-y: auto;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            display: none; 
+            border-radius: 0 0 4px 4px;
+        }
+        .autocomplete-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f1f1;
+            font-size: 13px;
+            color: #333;
+        }
+        .autocomplete-item:hover {
+            background-color: #e3f2fd;
+        }
+        .autocomplete-active {
+            background-color: #1976d2 !important;
+            color: #ffffff !important;
+        }
+        .autocomplete-active strong {
+            color: #ffeb3b !important; 
+        }
+        .autocomplete-item strong {
+            color: #ef3d2d; 
+        }
 
-        /* TOAST */
-        #toast-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 10px; z-index: 1000; }
-        .toast { background: #323232; color: white; padding: 12px 24px; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-size: 14px; opacity: 0; transform: translateY(20px); transition: 0.3s ease; }
+        /* --- TOAST --- */
+        #toast-container {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; flex-direction: column; gap: 10px; z-index: 1000;
+        }
+        .toast {
+            background: #323232; color: white; padding: 12px 24px; border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-size: 14px; display: flex; align-items: center; gap: 10px;
+            opacity: 0; transform: translateY(20px); transition: 0.3s ease;
+        }
         .toast.show { opacity: 1; transform: translateY(0); }
         .toast.success { background: #2e7d32; }
         .toast.error { background: #c62828; }
@@ -75,19 +160,16 @@
         Pathao Uploader
     </div>
     <div class="controls">
-        <select id="storeSelect" onchange="changeStore()">
-            <option value="">Loading Stores...</option>
-        </select>
         <input type="file" id="uploadFile" accept=".xlsx, .xls">
-        <select id="sheetSelect" style="display:none;"></select>
+        <select id="sheetSelect" style="display:none; padding: 8px; border:1px solid #ddd; border-radius:4px;"></select>
         <button id="loadBtn" class="btn btn-red" style="display:none;" onclick="processSheet()">Load Data</button>
-        <button id="copyBtn" class="btn btn-green" style="display:none;" onclick="copyToClipboard()">📋 Copy</button>
+        <button id="copyBtn" class="btn btn-green" style="display:none;" onclick="copyToClipboard()">📋 Copy Data</button>
         <button id="uploadApiBtn" class="btn btn-blue" style="display:none;" onclick="uploadToPathao()">☁ Send to Pathao</button>
     </div>
 </div>
 
 <div class="stats-bar">
-    <span id="storeInfo">Store: None Selected</span>
+    <span id="storeInfo">Store: Loading...</span>
     <div class="stats-right">
         <span>📦 Parcels: <span id="totalCount">0</span></span>
         <span>💰 Total: <span id="totalAmount">0</span> Tk</span>
@@ -100,7 +182,7 @@
         <table id="dataTable">
             <thead>
                 <tr>
-                    <th style="width: 120px;">Status / CID</th>
+                    <th style="width: 80px;">ItemType</th>
                     <th style="width: 120px;">StoreName</th>
                     <th style="width: 140px;">MerchantOrderId</th>
                     <th style="width: 160px;">RecipientName(*)</th>
@@ -126,7 +208,6 @@
 <div id="toast-container"></div>
 
 <script>
-    // Paste your Web App URL Here
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbygCBFket7MXDDz2DnkDinXg_8zUq76rQCtW_maszf_dS86XNHx8TmldO_M7A-TItFWNw/exec";
 
     let workbook;
@@ -134,25 +215,17 @@
     let zonesCache = {};  
     let tableData = [];
     let CURRENT_STORE_ID = null;
-    let CURRENT_STORE_NAME = "Select Store";
+    let CURRENT_STORE_NAME = "Loading...";
 
     window.onload = async function() {
         try {
             const sResp = await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify({ action: "get_stores" }) });
             const sData = await sResp.json();
-            const storeSelect = document.getElementById('storeSelect');
-            storeSelect.innerHTML = ""; 
             if(sData.status === "success" && sData.data.data.length > 0) {
-                sData.data.data.forEach((store, index) => {
-                    const opt = document.createElement('option');
-                    opt.value = store.store_id; opt.innerText = store.store_name; storeSelect.appendChild(opt);
-                    if(index === 0) {
-                        CURRENT_STORE_ID = store.store_id;
-                        CURRENT_STORE_NAME = store.store_name;
-                        document.getElementById('storeInfo').innerHTML = `Store: <b>${CURRENT_STORE_NAME}</b>`;
-                    }
-                });
-            } else { storeSelect.innerHTML = "<option>No Store Found</option>"; }
+                CURRENT_STORE_ID = sData.data.data[0].store_id;
+                CURRENT_STORE_NAME = sData.data.data[0].store_name;
+                document.getElementById('storeInfo').innerHTML = `Store: <b>${CURRENT_STORE_NAME}</b>`;
+            }
         } catch(e) {}
 
         try {
@@ -161,27 +234,24 @@
             if(cData.status === "success") {
                 citiesCache = cData.data.data;
                 document.getElementById('apiStatus').innerHTML = '<span style="color:green">✔ Ready</span>';
-                fetchZones(1); fetchZones(2);
+                fetchZones(1); fetchZones(2); // Pre-load Dhaka and Ctg
             }
         } catch(e) { document.getElementById('apiStatus').innerText = "Net Error"; }
-        document.addEventListener('click', function(e) { closeAllLists(e.target); });
+        
+        document.addEventListener('click', function(e) {
+            closeAllLists(e.target);
+        });
     };
-
-    function changeStore() {
-        const select = document.getElementById('storeSelect');
-        CURRENT_STORE_ID = select.value;
-        CURRENT_STORE_NAME = select.options[select.selectedIndex].text;
-        document.getElementById('storeInfo').innerHTML = `Store: <b>${CURRENT_STORE_NAME}</b>`;
-        const rows = document.querySelectorAll("#tableBody tr");
-        rows.forEach(tr => { if(tr.cells.length > 1) tr.cells[1].innerText = CURRENT_STORE_NAME; });
-    }
 
     async function fetchZones(cityId) {
         if(zonesCache[cityId]) return zonesCache[cityId];
         try {
             const resp = await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify({ action: "get_zones", city_id: cityId }) });
             const data = await resp.json();
-            if(data.status === "success") { zonesCache[cityId] = data.data.data; return zonesCache[cityId]; }
+            if(data.status === "success") {
+                zonesCache[cityId] = data.data.data;
+                return zonesCache[cityId];
+            }
         } catch(e) {}
         return [];
     }
@@ -208,22 +278,29 @@
         const sheetName = document.getElementById('sheetSelect').value;
         const ws = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(ws, {header: 1});
+
         let headerIdx = -1;
         for(let i=0; i<Math.min(jsonData.length, 20); i++) {
             const rowStr = JSON.stringify(jsonData[i]).toLowerCase();
-            if(rowStr.includes('phone') && (rowStr.includes('name') || rowStr.includes('address'))) { headerIdx = i; break; }
+            if(rowStr.includes('phone') && (rowStr.includes('name') || rowStr.includes('address'))) {
+                headerIdx = i; break;
+            }
         }
         if (headerIdx === -1) { showToast("Header not found!", "error"); return; }
+
         const keys = jsonData[headerIdx].map(k => String(k).toLowerCase().replace(/[^a-z0-9]/g, ''));
         const rawData = jsonData.slice(headerIdx + 1);
+        
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = "";
         tableData = [];
+
         const getVal = (row, keyPart) => {
             const idx = keys.findIndex(k => k.includes(keyPart));
             return idx !== -1 ? row[idx] : "";
         };
-        
+
+        // --- BANGLA TO ENGLISH CITY MAPPING ---
         const cityKeywords = {
             "Dhaka": ["dhaka", "ঢাকা", "keraniganj", "savar", "narayanganj", "gazipur", "নারায়ণগঞ্জ", "গাজীপুর", "সাভার", "কেরানীগঞ্জ"],
             "Chittagong": ["chittagong", "ctg", "chattogram", "চট্টগ্রাম"],
@@ -243,42 +320,57 @@
 
         for (let i = 0; i < rawData.length; i++) {
             const row = rawData[i];
+            
             let phone = cleanPhone(getVal(row, 'phone'));
             let amount = cleanAmount(getVal(row, 'amount'));
+            
+            // --- FIX FOR ADDRESS LINE BREAKS ---
             let rawAddress = String(getVal(row, 'address') || "");
+            // Replace newlines/tabs with space to fix display issue
             let address = rawAddress.replace(/[\r\n\t]+/g, " ").trim();
+
             let merchantId = String(getVal(row, 'merchant') || "");
             let name = String(getVal(row, 'name') || "");
             let desc = String(getVal(row, 'product') || getVal(row, 'desc') || ""); 
+            
+            // --- FIX FOR QUANTITY ---
             let qty = getVal(row, 'quantity') || getVal(row, 'qty') || 1;
 
             if (!phone && !amount && !address) continue;
 
-            let detectedCityId = ""; let detectedCityName = "";
+            // --- IMPROVED AUTO DETECT CITY ---
+            let detectedCityId = ""; 
+            let detectedCityName = "";
             const addrLower = address.toLowerCase();
+
+            // 1. Try Exact API Match
             const foundCity = citiesCache.find(c => addrLower.includes(c.city_name.toLowerCase()));
+            
             if (foundCity) {
-                detectedCityId = foundCity.city_id; detectedCityName = foundCity.city_name;
+                detectedCityId = foundCity.city_id; 
+                detectedCityName = foundCity.city_name;
             } else {
+                // 2. Try Keyword Mapping (For Bangla)
                 for (const [engName, keywords] of Object.entries(cityKeywords)) {
                     if (keywords.some(k => addrLower.includes(k))) {
+                        // Find ID from Cache using English Name
                         const targetCity = citiesCache.find(c => c.city_name.toLowerCase() === engName.toLowerCase());
-                        if(targetCity) { detectedCityId = targetCity.city_id; detectedCityName = targetCity.city_name; break; }
+                        if(targetCity) {
+                            detectedCityId = targetCity.city_id;
+                            detectedCityName = targetCity.city_name;
+                            break;
+                        }
                     }
                 }
-            }
-
-            // --- RESTORED DEFAULT DHAKA LOGIC ---
-            if (!detectedCityId) {
-                detectedCityId = 1; // Dhaka ID
-                detectedCityName = "Dhaka";
             }
 
             const rowId = i;
             const rowObj = {
                 id: rowId,
-                merchantId, name, phone, address, amount, qty, desc, specialInstruction: "", 
-                cityId: detectedCityId, cityName: detectedCityName, zoneId: "", zoneName: "",
+                merchantId, name, phone, address, amount, qty, desc,
+                specialInstruction: "", 
+                cityId: detectedCityId, cityName: detectedCityName,
+                zoneId: "", zoneName: "",
                 status: "Pending"
             };
             tableData.push(rowObj);
@@ -297,6 +389,8 @@
                 <td style="height: auto;">
                     <textarea class="cell-textarea" onchange="updateData(${rowId}, 'address', this.value); autoDetectZone(${rowId});">${address}</textarea>
                 </td>
+                
+                <!-- CUSTOM AUTOCOMPLETE FOR CITY -->
                 <td>
                     <div class="autocomplete-wrapper">
                         <input class="cell-input ${cityClass}" id="city-input-${rowId}" value="${detectedCityName}" 
@@ -304,6 +398,8 @@
                         <div class="autocomplete-list" id="city-list-${rowId}"></div>
                     </div>
                 </td>
+                
+                <!-- CUSTOM AUTOCOMPLETE FOR ZONE -->
                 <td>
                     <div class="autocomplete-wrapper">
                         <input class="cell-input error-cell" id="zone-input-${rowId}" 
@@ -311,60 +407,125 @@
                         <div class="autocomplete-list" id="zone-list-${rowId}"></div>
                     </div>
                 </td>
+
                 <td><input class="cell-input" placeholder="Opt."></td>
                 <td><input class="cell-input" value="${amount}" onchange="updateStats()"></td>
                 <td><input class="cell-input" value="${qty}" style="width:100%"></td>
                 <td>0.5</td>
                 <td><input class="cell-input" value="${desc}" onchange="updateData(${rowId}, 'desc', this.value)"></td>
+                <!-- Special Instruction Input -->
                 <td><input class="cell-input" onchange="updateData(${rowId}, 'specialInstruction', this.value)" placeholder=""></td>
             `;
             tbody.appendChild(tr);
-            setupCityAutocomplete(rowId); setupZoneAutocomplete(rowId); autoDetectZone(rowId);
+            
+            setupCityAutocomplete(rowId);
+            setupZoneAutocomplete(rowId);
+            
+            autoDetectZone(rowId);
         }
+        
         document.getElementById('copyBtn').style.display = 'inline-block';
         document.getElementById('uploadApiBtn').style.display = 'inline-block';
         updateStats();
         showToast("Data Loaded Successfully", "success");
     }
 
+    // --- AUTOCOMPLETE LOGIC WITH KEYBOARD SUPPORT ---
+
     function setupCityAutocomplete(rowId) {
         const input = document.getElementById(`city-input-${rowId}`);
         const listDiv = document.getElementById(`city-list-${rowId}`);
         let currentFocus = -1;
-        const updateList = (val) => {
+
+        input.addEventListener('input', function() {
+            const val = this.value;
             closeAllLists();
             if (!val) return;
-            listDiv.innerHTML = ""; listDiv.style.display = "block"; currentFocus = -1;
+            
+            listDiv.innerHTML = "";
+            listDiv.style.display = "block";
+            currentFocus = -1;
+
             citiesCache.forEach(city => {
                 if (city.city_name.toLowerCase().includes(val.toLowerCase())) {
                     const item = document.createElement("div");
                     item.className = "autocomplete-item";
-                    item.innerHTML = city.city_name.replace(new RegExp(`(${val})`, "gi"), "<strong>$1</strong>");
-                    item.addEventListener("click", () => selectItem(city));
+                    const regex = new RegExp(`(${val})`, "gi");
+                    item.innerHTML = city.city_name.replace(regex, "<strong>$1</strong>");
+                    
+                    item.addEventListener("click", function() {
+                        selectItem(city);
+                    });
                     listDiv.appendChild(item);
                 }
             });
-        };
-        input.addEventListener('input', () => updateList(input.value));
-        input.addEventListener('click', (e) => { e.stopPropagation(); updateList(input.value || " "); });
+        });
+        
+        input.addEventListener('click', function(e) {
+            e.stopPropagation();
+            closeAllLists();
+            listDiv.innerHTML = "";
+            listDiv.style.display = "block";
+            currentFocus = -1;
+            citiesCache.forEach(city => {
+                const item = document.createElement("div");
+                item.className = "autocomplete-item";
+                item.innerText = city.city_name;
+                item.addEventListener("click", function() {
+                    selectItem(city);
+                });
+                listDiv.appendChild(item);
+            });
+        });
+
         input.addEventListener("keydown", function(e) {
             let x = listDiv.getElementsByTagName("div");
-            if (e.keyCode == 40) { currentFocus++; addActive(x); } 
-            else if (e.keyCode == 38) { currentFocus--; addActive(x); } 
-            else if (e.keyCode == 13) { e.preventDefault(); if (currentFocus > -1 && x) x[currentFocus].click(); else if (x && x.length > 0) x[0].click(); }
+            if (e.keyCode == 40) { // DOWN
+                currentFocus++;
+                addActive(x);
+            } else if (e.keyCode == 38) { // UP
+                currentFocus--;
+                addActive(x);
+            } else if (e.keyCode == 13) { // ENTER
+                e.preventDefault();
+                if (currentFocus > -1) {
+                    if (x) x[currentFocus].click();
+                } else {
+                    if(x && x.length > 0) x[0].click();
+                }
+            }
         });
+
         function addActive(x) {
-            if (!x) return false; removeActive(x);
-            if (currentFocus >= x.length) currentFocus = 0; if (currentFocus < 0) currentFocus = (x.length - 1);
-            x[currentFocus].classList.add("autocomplete-active"); x[currentFocus].scrollIntoView({block: 'nearest'});
+            if (!x) return false;
+            removeActive(x);
+            if (currentFocus >= x.length) currentFocus = 0;
+            if (currentFocus < 0) currentFocus = (x.length - 1);
+            x[currentFocus].classList.add("autocomplete-active");
+            x[currentFocus].scrollIntoView({block: 'nearest'});
         }
-        function removeActive(x) { for (let i = 0; i < x.length; i++) x[i].classList.remove("autocomplete-active"); }
+
+        function removeActive(x) {
+            for (let i = 0; i < x.length; i++) {
+                x[i].classList.remove("autocomplete-active");
+            }
+        }
+
         function selectItem(city) {
-            input.value = city.city_name; tableData[rowId].cityId = city.city_id; tableData[rowId].cityName = city.city_name;
+            input.value = city.city_name;
+            tableData[rowId].cityId = city.city_id;
+            tableData[rowId].cityName = city.city_name;
             input.classList.remove('error-cell');
-            document.getElementById(`zone-input-${rowId}`).value = ""; tableData[rowId].zoneId = "";
-            listDiv.style.display = "none"; autoDetectZone(rowId);
-            const nextInput = document.getElementById(`city-input-${rowId + 1}`); if(nextInput) nextInput.focus();
+            
+            document.getElementById(`zone-input-${rowId}`).value = "";
+            tableData[rowId].zoneId = "";
+            
+            listDiv.innerHTML = "";
+            listDiv.style.display = "none";
+            autoDetectZone(rowId);
+
+            const nextInput = document.getElementById(`city-input-${rowId + 1}`);
+            if(nextInput) nextInput.focus();
         }
     }
 
@@ -372,189 +533,284 @@
         const input = document.getElementById(`zone-input-${rowId}`);
         const listDiv = document.getElementById(`zone-list-${rowId}`);
         let currentFocus = -1;
+
         const handler = async function(e) {
-            e.stopPropagation(); if (e.type === 'keydown') return;
-            const val = input.value; const cityId = tableData[rowId].cityId; if(!cityId) return;
+            e.stopPropagation();
+            if (e.type === 'keydown') return; 
+
+            const val = input.value;
+            const cityId = tableData[rowId].cityId;
+            if(!cityId) return;
+
             const zones = await fetchZones(cityId);
-            closeAllLists(); listDiv.innerHTML = ""; listDiv.style.display = "block"; currentFocus = -1;
+            closeAllLists();
+            
+            listDiv.innerHTML = "";
+            listDiv.style.display = "block";
+            currentFocus = -1;
+
             const matches = zones.filter(z => z.zone_name.toLowerCase().includes(val.toLowerCase()));
             const displayZones = val ? matches : zones;
+
             displayZones.forEach(z => {
-                const item = document.createElement("div"); item.className = "autocomplete-item";
-                item.innerHTML = val ? z.zone_name.replace(new RegExp(`(${val})`, "gi"), "<strong>$1</strong>") : z.zone_name;
-                item.addEventListener("click", () => {
-                    input.value = z.zone_name; tableData[rowId].zoneId = z.zone_id; tableData[rowId].zoneName = z.zone_name;
-                    input.classList.remove('error-cell'); input.classList.add('auto-filled'); listDiv.style.display = "none";
-                    const nextInput = document.getElementById(`zone-input-${rowId + 1}`); if(nextInput) nextInput.focus();
+                const item = document.createElement("div");
+                item.className = "autocomplete-item";
+                if(val) {
+                    const regex = new RegExp(`(${val})`, "gi");
+                    item.innerHTML = z.zone_name.replace(regex, "<strong>$1</strong>");
+                } else {
+                    item.innerText = z.zone_name;
+                }
+                
+                item.addEventListener("click", function() {
+                    input.value = z.zone_name;
+                    tableData[rowId].zoneId = z.zone_id;
+                    tableData[rowId].zoneName = z.zone_name;
+                    input.classList.remove('error-cell');
+                    input.classList.add('auto-filled');
+                    listDiv.style.display = "none";
+                    
+                    const nextInput = document.getElementById(`zone-input-${rowId + 1}`);
+                    if(nextInput) nextInput.focus();
                 });
                 listDiv.appendChild(item);
             });
         };
-        input.addEventListener('input', handler); input.addEventListener('click', handler);
+
+        input.addEventListener('input', handler);
+        input.addEventListener('click', handler);
+
         input.addEventListener("keydown", function(e) {
             let x = listDiv.getElementsByTagName("div");
-            if (e.keyCode == 40) { currentFocus++; addActive(x); } 
-            else if (e.keyCode == 38) { currentFocus--; addActive(x); } 
-            else if (e.keyCode == 13) { e.preventDefault(); if (currentFocus > -1 && x) x[currentFocus].click(); else if (x && x.length > 0) x[0].click(); }
+            if (e.keyCode == 40) { // DOWN
+                currentFocus++;
+                addActive(x);
+            } else if (e.keyCode == 38) { // UP
+                currentFocus--;
+                addActive(x);
+            } else if (e.keyCode == 13) { // ENTER
+                e.preventDefault();
+                if (currentFocus > -1) {
+                    if (x) x[currentFocus].click();
+                } else {
+                    if(x && x.length > 0) x[0].click();
+                }
+            }
         });
-        function addActive(x) { if (!x) return false; removeActive(x); if (currentFocus >= x.length) currentFocus = 0; if (currentFocus < 0) currentFocus = (x.length - 1); x[currentFocus].classList.add("autocomplete-active"); x[currentFocus].scrollIntoView({block: 'nearest'}); }
-        function removeActive(x) { for (let i = 0; i < x.length; i++) x[i].classList.remove("autocomplete-active"); }
+
+        function addActive(x) {
+            if (!x) return false;
+            removeActive(x);
+            if (currentFocus >= x.length) currentFocus = 0;
+            if (currentFocus < 0) currentFocus = (x.length - 1);
+            x[currentFocus].classList.add("autocomplete-active");
+            x[currentFocus].scrollIntoView({block: 'nearest'});
+        }
+
+        function removeActive(x) {
+            for (let i = 0; i < x.length; i++) {
+                x[i].classList.remove("autocomplete-active");
+            }
+        }
     }
 
     function closeAllLists(elmnt) {
         const x = document.getElementsByClassName("autocomplete-list");
-        for (let i = 0; i < x.length; i++) { if (elmnt != x[i] && elmnt != x[i].previousElementSibling) { x[i].innerHTML = ""; x[i].style.display = "none"; } }
+        for (let i = 0; i < x.length; i++) {
+            if (elmnt != x[i] && elmnt != x[i].previousElementSibling) {
+                x[i].innerHTML = "";
+                x[i].style.display = "none";
+            }
+        }
     }
 
+    // --- OTHER UTILS ---
+
     async function autoDetectZone(rowId) {
-        const row = tableData[rowId]; if(!row.cityId) return;
+        const row = tableData[rowId];
+        if(!row.cityId) return;
+
         const zones = await fetchZones(row.cityId);
         const sortedZones = [...zones].sort((a,b) => b.zone_name.length - a.zone_name.length);
         const matched = sortedZones.find(z => row.address.toLowerCase().includes(z.zone_name.toLowerCase()));
+        
         const zoneInput = document.getElementById(`zone-input-${rowId}`);
         if (matched) {
-            row.zoneId = matched.zone_id; zoneInput.value = matched.zone_name;
-            zoneInput.classList.remove('error-cell'); zoneInput.classList.add('auto-filled');
-        } else { zoneInput.classList.remove('auto-filled'); zoneInput.classList.add('error-cell'); }
+            row.zoneId = matched.zone_id;
+            zoneInput.value = matched.zone_name;
+            zoneInput.classList.remove('error-cell');
+            zoneInput.classList.add('auto-filled');
+        } else {
+            zoneInput.classList.remove('auto-filled');
+            zoneInput.classList.add('error-cell');
+        }
     }
 
     function validatePhoneUI(input, idx) {
-        let val = input.value.replace(/[^0-9]/g, ''); if (val.length > 11) val = val.substring(0, 11);
-        input.value = val; tableData[idx].phone = val;
-        if (val.length === 11) input.classList.remove('error-cell'); else input.classList.add('error-cell');
+        let val = input.value.replace(/[^0-9]/g, '');
+        if (val.length > 11) val = val.substring(0, 11);
+        input.value = val;
+        tableData[idx].phone = val;
+        if (val.length === 11) input.classList.remove('error-cell');
+        else input.classList.add('error-cell');
     }
+
     function updateData(index, field, value) { tableData[index][field] = value; }
+
     function cleanPhone(p) {
-        if(!p) return ""; let s = String(p).replace(/[^0-9]/g,'');
-        if (String(p).includes('E') || String(p).includes('e')) s = Number(p).toLocaleString('fullwide', {useGrouping:false});
-        if(s.startsWith('880')) s = s.substring(2); if(s.length > 0 && !s.startsWith('0')) s='0'+s;
+        if(!p) return "";
+        let s = String(p).replace(/[^0-9]/g,'');
+        if (String(p).includes('E') || String(p).includes('e')) {
+             s = Number(p).toLocaleString('fullwide', {useGrouping:false});
+        }
+        if(s.startsWith('880')) s = s.substring(2);
+        if(s.length > 0 && !s.startsWith('0')) s='0'+s;
         return s.substring(0,11);
     }
+    
     function cleanAmount(a) { return parseFloat(String(a).replace(/,/g,'')) || 0; }
+
     function updateStats() {
-        const rows = document.querySelectorAll("#tableBody tr"); let total = 0;
-        rows.forEach((r, i) => { const amt = r.cells[9].querySelector('input').value; total += parseFloat(amt) || 0; tableData[i].amount = amt; });
+        const rows = document.querySelectorAll("#tableBody tr");
+        let total = 0;
+        rows.forEach((r, i) => {
+             const amt = r.cells[9].querySelector('input').value; 
+             total += parseFloat(amt) || 0;
+             tableData[i].amount = amt; 
+        });
         document.getElementById('totalCount').innerText = rows.length;
         document.getElementById('totalAmount').innerText = total.toLocaleString();
     }
+
+    // --- COPY DATA ---
     function copyToClipboard() {
-        const rows = document.querySelectorAll("#tableBody tr"); let clipboardText = "";
+        const rows = document.querySelectorAll("#tableBody tr");
+        let clipboardText = "";
+        
         rows.forEach((tr, idx) => {
-            const inputs = tr.querySelectorAll("input, textarea"); let rowData = [];
-            rowData.push("Parcel"); rowData.push(CURRENT_STORE_NAME);
-            rowData.push(inputs[0].value); rowData.push(inputs[1].value); rowData.push(inputs[2].value); 
-            rowData.push(inputs[3].value.replace(/(\r\n|\n|\r)/gm, " ")); 
-            rowData.push(inputs[4].value); rowData.push(inputs[5].value); rowData.push(inputs[6].value); 
-            rowData.push(inputs[7].value); rowData.push(inputs[8].value); rowData.push("0.5");           
-            rowData.push(inputs[9].value); rowData.push(inputs[10].value);
+            const inputs = tr.querySelectorAll("input, textarea");
+            let rowData = [];
+            rowData.push("Parcel"); 
+            rowData.push(CURRENT_STORE_NAME);
+            rowData.push(inputs[0].value); // OrderID
+            rowData.push(inputs[1].value); // Name
+            rowData.push(inputs[2].value); // Phone
+            rowData.push(inputs[3].value.replace(/(\r\n|\n|\r)/gm, " ")); // Address
+            rowData.push(inputs[4].value); // City (Autocomplete Input)
+            rowData.push(inputs[5].value); // Zone (Autocomplete Input)
+            rowData.push(inputs[6].value); // Area
+            rowData.push(inputs[7].value); // Amount
+            rowData.push(inputs[8].value); // Qty
+            rowData.push("0.5");           
+            rowData.push(inputs[9].value); // Desc
+            rowData.push(inputs[10].value);// Instruction (Last Input)
             clipboardText += rowData.join("\t") + "\n";
         });
-        navigator.clipboard.writeText(clipboardText).then(() => { showToast("✅ Copied! Ready to paste in Pathao.", "success"); }).catch(err => showToast("Failed to copy", "error"));
+
+        navigator.clipboard.writeText(clipboardText).then(() => {
+            showToast("✅ Copied! Ready to paste in Pathao.", "success");
+        }).catch(err => showToast("Failed to copy", "error"));
     }
 
-    // --- UPLOAD WITH CHUNKING (SUPER FAST) ---
+    // --- UPLOAD ---
     async function uploadToPathao() {
-        if(!CURRENT_STORE_ID) { showToast("Store ID not found. Please refresh.", "error"); return; }
-        const errors = document.querySelectorAll('.error-cell');
-        if (errors.length > 0) { showToast(`⚠️ Please fix ${errors.length} red error boxes first!`, "warning"); errors[0].scrollIntoView({behavior: "smooth", block: "center"}); return; }
-
-        const btn = document.getElementById('uploadApiBtn');
-        const originalText = btn.innerHTML; const originalClass = btn.className;
-        btn.disabled = true; btn.innerHTML = '<span class="loader"></span> Processing...'; 
-
-        let hasError = false;
+        if(!CURRENT_STORE_ID) { showToast("Store ID not found.", "error"); return; }
         
-        // Prepare ALL valid rows
-        const pendingRows = tableData.filter((row, i) => {
-            const tr = document.getElementById(`row-${i}`);
-            // Check validation again just in case
-            if(!row.phone || row.phone.length !== 11 || !row.cityId || !row.zoneId) return false;
-            // Skip already done
-            if(tr.className.includes("row-success")) return false;
-            
-            // UI Update: Set status to sending
-            const statusCell = document.getElementById(`status-cell-${i}`);
-            statusCell.innerHTML = `<span class="loader"></span> Sending`;
-            return true;
-        });
-
-        if(pendingRows.length === 0) {
-            btn.disabled = false; btn.innerHTML = originalText;
-            showToast("No pending orders to send.", "warning");
-            return;
+        const errors = document.querySelectorAll('.error-cell');
+        if (errors.length > 0) {
+            showToast(`⚠️ Please fix ${errors.length} red error boxes first!`, "warning");
+            errors[0].scrollIntoView({behavior: "smooth", block: "center"});
+            return; 
         }
 
-        // BATCH SIZE: 50 (Pathao can likely handle this via GAS)
-        const BATCH_SIZE = 50;
+        const btn = document.getElementById('uploadApiBtn');
+        const originalText = btn.innerHTML; // Store original html
+        const originalClass = btn.className;
 
-        for (let i = 0; i < pendingRows.length; i += BATCH_SIZE) {
-            const chunk = pendingRows.slice(i, i + BATCH_SIZE);
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loader"></span> Processing...'; // CHANGE TEXT
+
+        let hasError = false;
+
+        for (let i = 0; i < tableData.length; i++) {
+            const row = tableData[i];
+            const tr = document.getElementById(`row-${i}`);
+            const statusCell = document.getElementById(`status-cell-${i}`);
             
-            // Map rows to Pathao Payload format
-            const payloadData = chunk.map(row => ({
-                store_id: Number(CURRENT_STORE_ID), // Ensure number
+            if(tr.className.includes("row-success")) continue;
+
+            statusCell.innerHTML = `<span class="loader"></span> Parcel`;
+
+            const payload = {
+                store_id: CURRENT_STORE_ID,
                 merchant_order_id: row.merchantId,
                 recipient_name: row.name,
                 recipient_phone: row.phone,
                 recipient_address: row.address,
-                recipient_city: Number(row.cityId),
-                recipient_zone: Number(row.zoneId),
+                recipient_city: row.cityId,
+                recipient_zone: row.zoneId,
                 amount_to_collect: parseInt(row.amount),
                 item_quantity: parseInt(row.qty),
                 item_type: 2, 
                 delivery_type: 48, 
                 item_weight: 0.5,
                 item_description: row.desc,
-                special_instruction: row.specialInstruction || "" 
-            }));
+                special_instruction: row.specialInstruction || "" // Added mapping
+            };
 
             try {
-                // Send ONE BIG REQUEST for 50 orders to Code.gs
                 const response = await fetch(GAS_API_URL, {
                     method: "POST",
-                    body: JSON.stringify({ action: "create_bulk_orders", data: payloadData })
+                    body: JSON.stringify({ action: "create_order", data: payload })
                 });
                 const result = await response.json();
-
-                if (result.status === "success" && Array.isArray(result.data)) {
-                    // Result.data contains array of statuses matching the chunk order
-                    result.data.forEach((res, idx) => {
-                        const originalRowIndex = chunk[idx].id;
-                        const tr = document.getElementById(`row-${originalRowIndex}`);
-                        const statusCell = document.getElementById(`status-cell-${originalRowIndex}`);
-                        
-                        if (res.success) {
-                            statusCell.innerHTML = `<span style='color:green; font-weight:bold;'>✔ ${res.consignment_id}</span>`;
-                            tr.className = "row-success";
-                        } else {
-                            statusCell.innerHTML = `<span style='color:red; cursor:pointer' title='${res.message}'>✖ Fail</span>`;
-                            tr.className = "row-error";
-                            hasError = true;
-                        }
-                    });
+                
+                if (result.status === "success" && result.data.success) {
+                    statusCell.innerHTML = `<span style='color:green'>✔</span> Parcel`;
+                    tr.className = "row-success";
                 } else {
-                    hasError = true; // Overall failure
+                    let msg = result.data.message || "Failed";
+                    statusCell.innerHTML = `<span style='color:red; cursor:pointer' title='${msg}'>✖</span> Parcel`;
+                    tr.className = "row-error";
+                    hasError = true; // MARK ERROR
                 }
             } catch (e) {
-                console.error(e);
-                hasError = true;
+                statusCell.innerHTML = `⚠ Net Error`;
+                hasError = true; // MARK ERROR
             }
         }
 
         btn.disabled = false;
-        if (!hasError) { btn.innerText = "Successfully"; btn.className = "btn btn-green"; } 
-        else { btn.innerText = "Fail"; btn.className = "btn btn-red"; }
+        
+        // --- BUTTON STATUS UPDATE ---
+        if (!hasError) {
+            btn.innerText = "Successfully";
+            btn.className = "btn btn-green";
+        } else {
+            btn.innerText = "Fail";
+            btn.className = "btn btn-red";
+        }
 
-        setTimeout(() => { btn.innerHTML = originalText; btn.className = originalClass; }, 3000);
+        // Revert after 3 seconds
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.className = originalClass;
+        }, 3000);
+
         showToast("Process Finished", hasError ? "warning" : "success");
     }
 
     function showToast(message, type = "") {
         const container = document.getElementById('toast-container');
-        const toast = document.createElement('div'); toast.className = `toast ${type}`; toast.innerHTML = message;
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = message;
         container.appendChild(toast);
         setTimeout(() => toast.classList.add('show'), 100);
-        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
     }
 </script>
 
