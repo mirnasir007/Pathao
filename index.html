@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pathao Smart Bulk Uploader</title>
-    <!-- FAVICON ADDED -->
     <link rel="icon" type="image/png" href="logo.png">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -208,6 +207,7 @@
 <div id="toast-container"></div>
 
 <script>
+    // Replace this URL with your new Web App URL if it changes
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbygCBFket7MXDDz2DnkDinXg_8zUq76rQCtW_maszf_dS86XNHx8TmldO_M7A-TItFWNw/exec";
 
     let workbook;
@@ -300,7 +300,8 @@
             return idx !== -1 ? row[idx] : "";
         };
 
-        // --- BANGLA TO ENGLISH CITY MAPPING ---
+        // --- CITY MAPPING CONFIGURATION ---
+        // This data is required for auto-detection of Bangla city names
         const cityKeywords = {
             "Dhaka": ["dhaka", "ঢাকা", "keraniganj", "savar", "narayanganj", "gazipur", "নারায়ণগঞ্জ", "গাজীপুর", "সাভার", "কেরানীগঞ্জ"],
             "Chittagong": ["chittagong", "ctg", "chattogram", "চট্টগ্রাম"],
@@ -324,21 +325,19 @@
             let phone = cleanPhone(getVal(row, 'phone'));
             let amount = cleanAmount(getVal(row, 'amount'));
             
-            // --- FIX FOR ADDRESS LINE BREAKS ---
+            // Fix for address line breaks
             let rawAddress = String(getVal(row, 'address') || "");
-            // Replace newlines/tabs with space to fix display issue
             let address = rawAddress.replace(/[\r\n\t]+/g, " ").trim();
 
             let merchantId = String(getVal(row, 'merchant') || "");
             let name = String(getVal(row, 'name') || "");
             let desc = String(getVal(row, 'product') || getVal(row, 'desc') || ""); 
             
-            // --- FIX FOR QUANTITY ---
             let qty = getVal(row, 'quantity') || getVal(row, 'qty') || 1;
 
             if (!phone && !amount && !address) continue;
 
-            // --- IMPROVED AUTO DETECT CITY ---
+            // Auto Detect City
             let detectedCityId = ""; 
             let detectedCityName = "";
             const addrLower = address.toLowerCase();
@@ -350,7 +349,7 @@
                 detectedCityId = foundCity.city_id; 
                 detectedCityName = foundCity.city_name;
             } else {
-                // 2. Try Keyword Mapping (For Bangla)
+                // 2. Try Keyword Mapping
                 for (const [engName, keywords] of Object.entries(cityKeywords)) {
                     if (keywords.some(k => addrLower.includes(k))) {
                         // Find ID from Cache using English Name
@@ -390,7 +389,6 @@
                     <textarea class="cell-textarea" onchange="updateData(${rowId}, 'address', this.value); autoDetectZone(${rowId});">${address}</textarea>
                 </td>
                 
-                <!-- CUSTOM AUTOCOMPLETE FOR CITY -->
                 <td>
                     <div class="autocomplete-wrapper">
                         <input class="cell-input ${cityClass}" id="city-input-${rowId}" value="${detectedCityName}" 
@@ -399,7 +397,6 @@
                     </div>
                 </td>
                 
-                <!-- CUSTOM AUTOCOMPLETE FOR ZONE -->
                 <td>
                     <div class="autocomplete-wrapper">
                         <input class="cell-input error-cell" id="zone-input-${rowId}" 
@@ -413,7 +410,6 @@
                 <td><input class="cell-input" value="${qty}" style="width:100%"></td>
                 <td>0.5</td>
                 <td><input class="cell-input" value="${desc}" onchange="updateData(${rowId}, 'desc', this.value)"></td>
-                <!-- Special Instruction Input -->
                 <td><input class="cell-input" onchange="updateData(${rowId}, 'specialInstruction', this.value)" placeholder=""></td>
             `;
             tbody.appendChild(tr);
@@ -430,7 +426,7 @@
         showToast("Data Loaded Successfully", "success");
     }
 
-    // --- AUTOCOMPLETE LOGIC WITH KEYBOARD SUPPORT ---
+    // --- AUTOCOMPLETE LOGIC ---
 
     function setupCityAutocomplete(rowId) {
         const input = document.getElementById(`city-input-${rowId}`);
@@ -624,7 +620,7 @@
         }
     }
 
-    // --- OTHER UTILS ---
+    // --- UTILS ---
 
     async function autoDetectZone(rowId) {
         const row = tableData[rowId];
@@ -696,108 +692,134 @@
             rowData.push(inputs[1].value); // Name
             rowData.push(inputs[2].value); // Phone
             rowData.push(inputs[3].value.replace(/(\r\n|\n|\r)/gm, " ")); // Address
-            rowData.push(inputs[4].value); // City (Autocomplete Input)
-            rowData.push(inputs[5].value); // Zone (Autocomplete Input)
+            rowData.push(inputs[4].value); // City 
+            rowData.push(inputs[5].value); // Zone 
             rowData.push(inputs[6].value); // Area
             rowData.push(inputs[7].value); // Amount
             rowData.push(inputs[8].value); // Qty
             rowData.push("0.5");           
             rowData.push(inputs[9].value); // Desc
-            rowData.push(inputs[10].value);// Instruction (Last Input)
+            rowData.push(inputs[10].value);// Instruction
             clipboardText += rowData.join("\t") + "\n";
         });
 
         navigator.clipboard.writeText(clipboardText).then(() => {
-            showToast("✅ Copied! Ready to paste in Pathao.", "success");
+            showToast("Copied! Ready to paste in Pathao.", "success");
         }).catch(err => showToast("Failed to copy", "error"));
     }
 
-    // --- UPLOAD ---
+    // --- UPLOAD: UNLIMITED & SMART BATCHING ---
     async function uploadToPathao() {
         if(!CURRENT_STORE_ID) { showToast("Store ID not found.", "error"); return; }
         
+        // Check Errors
         const errors = document.querySelectorAll('.error-cell');
         if (errors.length > 0) {
-            showToast(`⚠️ Please fix ${errors.length} red error boxes first!`, "warning");
+            showToast(`Please fix ${errors.length} red error boxes first!`, "warning");
             errors[0].scrollIntoView({behavior: "smooth", block: "center"});
             return; 
         }
 
         const btn = document.getElementById('uploadApiBtn');
-        const originalText = btn.innerHTML; // Store original html
+        const originalText = btn.innerHTML;
         const originalClass = btn.className;
 
-        btn.disabled = true;
-        btn.innerHTML = '<span class="loader"></span> Processing...'; // CHANGE TEXT
-
-        let hasError = false;
-
+        // 1. Collect ALL Pending Data
+        let payloadBatch = [];
+        
         for (let i = 0; i < tableData.length; i++) {
             const row = tableData[i];
             const tr = document.getElementById(`row-${i}`);
-            const statusCell = document.getElementById(`status-cell-${i}`);
             
+            // Skip success rows
             if(tr.className.includes("row-success")) continue;
 
-            statusCell.innerHTML = `<span class="loader"></span> Parcel`;
+            // Set Loading Status
+            document.getElementById(`status-cell-${i}`).innerHTML = `<span class="loader"></span> Waiting...`;
 
-            const payload = {
-                store_id: CURRENT_STORE_ID,
-                merchant_order_id: row.merchantId,
-                recipient_name: row.name,
-                recipient_phone: row.phone,
-                recipient_address: row.address,
-                recipient_city: row.cityId,
-                recipient_zone: row.zoneId,
-                amount_to_collect: parseInt(row.amount),
-                item_quantity: parseInt(row.qty),
-                item_type: 2, 
-                delivery_type: 48, 
-                item_weight: 0.5,
-                item_description: row.desc,
-                special_instruction: row.specialInstruction || "" // Added mapping
-            };
-
-            try {
-                const response = await fetch(GAS_API_URL, {
-                    method: "POST",
-                    body: JSON.stringify({ action: "create_order", data: payload })
-                });
-                const result = await response.json();
-                
-                if (result.status === "success" && result.data.success) {
-                    statusCell.innerHTML = `<span style='color:green'>✔</span> Parcel`;
-                    tr.className = "row-success";
-                } else {
-                    let msg = result.data.message || "Failed";
-                    statusCell.innerHTML = `<span style='color:red; cursor:pointer' title='${msg}'>✖</span> Parcel`;
-                    tr.className = "row-error";
-                    hasError = true; // MARK ERROR
+            payloadBatch.push({
+                rowId: i,
+                data: {
+                    store_id: CURRENT_STORE_ID,
+                    merchant_order_id: row.merchantId,
+                    recipient_name: row.name,
+                    recipient_phone: row.phone,
+                    recipient_address: row.address,
+                    recipient_city: row.cityId,
+                    recipient_zone: row.zoneId,
+                    amount_to_collect: parseInt(row.amount),
+                    item_quantity: parseInt(row.qty),
+                    item_type: 2, 
+                    delivery_type: 48, 
+                    item_weight: 0.5,
+                    item_description: row.desc,
+                    special_instruction: row.specialInstruction || ""
                 }
-            } catch (e) {
-                statusCell.innerHTML = `⚠ Net Error`;
-                hasError = true; // MARK ERROR
+            });
+        }
+
+        if(payloadBatch.length === 0) {
+            showToast("No pending parcels to upload.", "success");
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = `<span class="loader"></span> Sending ${payloadBatch.length} Parcels...`;
+
+        try {
+            // 2. Send Batch Request
+            const response = await fetch(GAS_API_URL, {
+                method: "POST",
+                body: JSON.stringify({ 
+                    action: "create_bulk_orders", 
+                    orders: payloadBatch 
+                })
+            });
+            
+            const result = await response.json();
+
+            if (result.status === "success") {
+                const results = result.data; 
+                let successCount = 0;
+
+                // 3. Update UI based on Response
+                results.forEach(res => {
+                    const statusCell = document.getElementById(`status-cell-${res.rowId}`);
+                    const tr = document.getElementById(`row-${res.rowId}`);
+
+                    if (res.success) {
+                        statusCell.innerHTML = `<span style='color:green; font-weight:bold;'>✔ ${res.consignment_id}</span>`;
+                        tr.className = "row-success";
+                        successCount++;
+                    } else {
+                        statusCell.innerHTML = `<span style='color:red; cursor:pointer' title='${res.message}'>✖ Fail</span>`;
+                        tr.className = "row-error";
+                    }
+                });
+                
+                showToast(`Finished! ${successCount}/${payloadBatch.length} Success.`, successCount === payloadBatch.length ? "success" : "warning");
+
+            } else {
+                showToast("Server Error: " + result.message, "error");
+                payloadBatch.forEach(item => {
+                    document.getElementById(`status-cell-${item.rowId}`).innerHTML = `Parcel`;
+                });
             }
+
+        } catch (e) {
+            showToast("Network Error: " + e.message, "error");
+            console.error(e);
+            payloadBatch.forEach(item => {
+                document.getElementById(`status-cell-${item.rowId}`).innerHTML = `Parcel`;
+            });
         }
 
         btn.disabled = false;
-        
-        // --- BUTTON STATUS UPDATE ---
-        if (!hasError) {
-            btn.innerText = "Successfully";
-            btn.className = "btn btn-green";
-        } else {
-            btn.innerText = "Fail";
-            btn.className = "btn btn-red";
-        }
-
-        // Revert after 3 seconds
+        btn.innerText = "Complete";
         setTimeout(() => {
             btn.innerHTML = originalText;
             btn.className = originalClass;
         }, 3000);
-
-        showToast("Process Finished", hasError ? "warning" : "success");
     }
 
     function showToast(message, type = "") {
